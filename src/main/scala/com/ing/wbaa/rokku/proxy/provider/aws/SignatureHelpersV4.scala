@@ -51,7 +51,7 @@ class SignatureHelpersV4 extends SignatureHelpersCommon {
       .findFirstMatchIn(authorization)
       .map(_ group 1).getOrElse("")
 
-  def getAWSHeaders(httpRequest: HttpRequest): AWSHeaderValues = {
+  def getAWSHeaders(httpRequest: HttpRequest, removeSecurityToken: Boolean = false): AWSHeaderValues = {
     implicit val hr = httpRequest
     val authorization: Option[String] = extractHeaderOption("authorization")
     val signature = authorization.map(auth => getSignatureFromAuthorization(auth))
@@ -59,6 +59,7 @@ class SignatureHelpersV4 extends SignatureHelpersCommon {
 
     val signedHeadersMap = authorization.map(auth => getSignedHeaders(auth)).getOrElse("")
       .split(";")
+      .filter(f => !(f.equals("x-amz-security-token") && removeSecurityToken))
       .toList
       .map { header =>
         if (header == "content-type") {

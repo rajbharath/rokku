@@ -38,7 +38,7 @@ class SignatureHelpersV2 extends SignatureHelpersCommon {
     }
   }
 
-  def getAWSHeaders(httpRequest: HttpRequest): AWSHeaderValues = {
+  def getAWSHeaders(httpRequest: HttpRequest, removeSecurityToken: Boolean = false): AWSHeaderValues = {
     implicit val hr = httpRequest
 
     val authorization: Option[String] = extractHeaderOption("authorization")

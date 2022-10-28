@@ -19,7 +19,7 @@ trait SignatureHelpersCommon {
 
   def extractRequestParameters(httpRequest: HttpRequest): util.Map[String, util.List[String]]
 
-  def getAWSHeaders(httpRequest: HttpRequest): AWSHeaderValues
+  def getAWSHeaders(httpRequest: HttpRequest, removeSecurityToken: Boolean = false): AWSHeaderValues
 
   def signS3Request(request: DefaultRequest[_], credentials: BasicAWSCredentials, date: String, region: String = "us-east-1")(implicit id: RequestId): Unit
 

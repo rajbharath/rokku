@@ -35,18 +35,19 @@ trait RequestHandlerS3 extends S3Client with UserRequestQueue {
    */
   protected[this] def executeRequest(request: HttpRequest, userSTS: User, s3request: S3Request)(implicit id: RequestId): Future[HttpResponse] = {
 
-    val npaRequest = getNpaRequest(request)
+    val modRequest = request.withHeaders(headers = request.headers.filter(h => h.name != "X-Amz-Security-Token"))
+    val npaRequest = getNpaRequest(modRequest)
     val userAgent = request.getHeader("User-Agent").orElse(RawHeader("User-Agent", "unknown")).value()
-
-    val newRequest = request
-      .withUri(request.uri.withScheme(storageS3Settings.storageS3Schema).withAuthority(storageS3Settings.storageS3Authority))
-      .withEntity(request.entity)
+    
+    val newRequest = modRequest
+      .withUri(modRequest.uri.withScheme(storageS3Settings.storageS3Schema).withAuthority(storageS3Settings.storageS3Authority))
+      .withEntity(modRequest.entity)
       .addHeader(RawHeader("User-Agent", userAgent))
       .removeHeader("Authorization")
       .addHeader(RawHeader("Authorization", npaRequest.getHeaders.get("Authorization")))
 
     fireRequestToS3(newRequest, userSTS).flatMap { response =>
-      Future(filterResponse(request, userSTS, s3request, response))
+      Future(filterResponse(modRequest, userSTS, s3request, response))
     }
   }
 
@@ -58,7 +59,7 @@ trait RequestHandlerS3 extends S3Client with UserRequestQueue {
    */
   private def getNpaRequest(request: HttpRequest)(implicit id: RequestId): Request[_] = {
     val awsSignature = awsVersion(request)
-    val awsHeaders = awsSignature.getAWSHeaders(request)
+    val awsHeaders = awsSignature.getAWSHeaders(request, true)
     val npaRequest = awsSignature.getSignableRequest(request)
 
     awsSignature.addHeadersToRequest(npaRequest, awsHeaders, request.entity.contentType.mediaType.value)

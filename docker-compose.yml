@@ -1,22 +1,34 @@
 version: "3"
 services:
 
-  ceph:
-    image: ceph/daemon:v3.0.5-stable-3.0-luminous-centos-7
-    environment:
-      - CEPH_DEMO_UID=ceph-admin
-      - CEPH_DEMO_ACCESS_KEY=accesskey
-      - CEPH_DEMO_SECRET_KEY=secretkey
-      - CEPH_DEMO_BUCKET=demobucket
-      - RGW_NAME=s3.localhost
-      - RGW_CIVETWEB_PORT=8010
-      - NETWORK_AUTO_DETECT=4
-      - RESTAPI_LOG_LEVEL=debug
+  # ceph:
+  #   image: ceph/daemon:v3.0.5-stable-3.0-luminous-centos-7
+  #   environment:
+  #     - CEPH_DEMO_UID=ceph-admin
+  #     - CEPH_DEMO_ACCESS_KEY=accesskey
+  #     - CEPH_DEMO_SECRET_KEY=secretkey
+  #     - CEPH_DEMO_BUCKET=demobucket
+  #     - RGW_NAME=s3.localhost
+  #     - RGW_CIVETWEB_PORT=8010
+  #     - NETWORK_AUTO_DETECT=4
+  #     - RESTAPI_LOG_LEVEL=debug
+  #   ports:
+  #     - 8010:8010
+  #     - 5000:5000
+  #   hostname: s3.localhost
+  #   command: demo
+  
+  minio:
+    image: minio/minio
     ports:
-      - 8010:8010
-      - 5000:5000
-    hostname: s3.localhost
-    command: demo
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_storage:/data
+    environment:
+      MINIO_ROOT_USER: accesskey
+      MINIO_ROOT_PASSWORD: secretkey
+    command: server /data --console-address ":9001"
 
   postgres-server:
     image: wbaa/rokku-dev-apache-ranger-postgres:0.0.21
@@ -27,7 +39,7 @@ services:
     tty: true
     depends_on:
       - "postgres-server"
-      - "ceph"
+      - "minio"
     ports:
       - "6080:6080"
 
@@ -73,6 +85,19 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
 
+  # rokku-proxy:
+  #   image: wbaa/rokku:latest
+  #   hostname: rokku-proxy
+  #   container_name: rokku-proxy
+  #   depends_on:
+  #     - "ranger-admin"
+  #   ports:
+  #     - "8987:8987"
+  #   environment:
+  #     ROKKU_HTTP_BIND: "0.0.0.0"
+  #   volumes:
+  #     - /home/resources/xmls:/etc/rokku
+
   kafka:
     image: confluentinc/cp-kafka:5.4.0
     hostname: kafka
@@ -89,3 +114,5 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
 
+volumes:
+  minio_storage: {}

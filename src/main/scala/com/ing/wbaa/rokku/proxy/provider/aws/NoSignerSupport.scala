@@ -14,7 +14,7 @@ class NoSignerSupport(authorization: String) extends SignatureHelpersCommon {
   override def extractRequestParameters(httpRequest: HttpRequest): util.Map[String, util.List[String]] =
     throw new SignatureNotSupported(exceptionMsg)
 
-  override def getAWSHeaders(httpRequest: HttpRequest): AWSHeaderValues = throw new SignatureNotSupported(exceptionMsg)
+  override def getAWSHeaders(httpRequest: HttpRequest, removeSecurityToken: Boolean=false): AWSHeaderValues = throw new SignatureNotSupported(exceptionMsg)
 
   override def addHeadersToRequest(request: DefaultRequest[_], awsHeaders: AWSHeaderValues, mediaType: String): Unit =
     throw new SignatureNotSupported(exceptionMsg)
